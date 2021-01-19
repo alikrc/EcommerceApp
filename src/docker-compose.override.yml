@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  basketdata:
+    ports:
+      - "6379:6379"
+    volumes:
+      - ecommerceapp-basketdata:/data
+  rabbitmq:
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  basket-api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+      #- identityUrl=http://identity-api
+      - IdentityUrlExternal=http://${ECCOMMERCEAPP_EXTERNAL_DNS_NAME_OR_IP}:5105
+      - PATH_BASE=/basket-api
+      - GRPC_PORT=81
+      - PORT=80
+    ports:
+      - "5103:80"
+      - "9103:81"
+
+volumes:
+  ecommerceapp-basketdata:
+    external: false
