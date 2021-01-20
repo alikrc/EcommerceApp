@@ -1,6 +1,10 @@
 version: "3.8"
 
 services:
+
+  seq:
+    image: datalust/seq:latest
+
   basketdata:
     image: redis:alpine
 
