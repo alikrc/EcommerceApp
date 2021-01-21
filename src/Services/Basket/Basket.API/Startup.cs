@@ -3,8 +3,11 @@ using Autofac.Extensions.DependencyInjection;
 using EventBus;
 using EventBus.Abstractions;
 using EventBusRabbitMQ;
+using GrpcBasket;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,12 +23,14 @@ using Services.Basket.API.Infrastructure.Filters;
 using Services.Basket.API.Infrastructure.Middlewares;
 using Services.Basket.API.Infrastructure.Repositories;
 using Services.Basket.API.IntegrationEvents.EventHandling;
+using Services.Basket.API.IntegrationEvents.Events;
 using Services.Basket.API.Model;
 using Services.Basket.API.Services;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -149,6 +154,62 @@ namespace Services.Basket.API
             return new AutofacServiceProvider(container.Build());
         }
 
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        {
+            var pathBase = Configuration["PATH_BASE"];
+            if (!string.IsNullOrEmpty(pathBase))
+            {
+                app.UsePathBase(pathBase);
+            }
+
+            app.UseSwagger()
+               .UseSwaggerUI(setup =>
+               {
+                   setup.SwaggerEndpoint($"{ (!string.IsNullOrEmpty(pathBase) ? pathBase : string.Empty) }/swagger/v1/swagger.json", "Basket.API V1");
+                   setup.OAuthClientId("basketswaggerui");
+                   setup.OAuthAppName("Basket Swagger UI");
+               });
+
+            app.UseRouting();
+            app.UseCors("CorsPolicy");
+            ConfigureAuth(app);
+
+            app.UseStaticFiles();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGrpcService<BasketService>();
+                endpoints.MapDefaultControllerRoute();
+                endpoints.MapControllers();
+                endpoints.MapGet("/_proto/", async ctx =>
+                {
+                    ctx.Response.ContentType = "text/plain";
+                    using var fs = new FileStream(Path.Combine(env.ContentRootPath, "Proto", "basket.proto"), FileMode.Open, FileAccess.Read);
+                    using var sr = new StreamReader(fs);
+                    while (!sr.EndOfStream)
+                    {
+                        var line = await sr.ReadLineAsync();
+                        if (line != "/* >>" || line != "<< */")
+                        {
+                            await ctx.Response.WriteAsync(line);
+                        }
+                    }
+                });
+                //endpoints.MapHealthChecks("/hc", new HealthCheckOptions()
+                //{
+                //    Predicate = _ => true,
+                //    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                //});
+                //endpoints.MapHealthChecks("/liveness", new HealthCheckOptions
+                //{
+                //    Predicate = r => r.Name.Contains("self")
+                //});
+            });
+
+            ConfigureEventBus(app);
+        }
+
         private void ConfigureAuthService(IServiceCollection services)
         {
             // prevent from mapping "sub" claim to nameidentifier.
@@ -168,6 +229,12 @@ namespace Services.Basket.API
                 options.Audience = "basket";
             });
         }
+        protected virtual void ConfigureAuth(IApplicationBuilder app)
+        {
+            app.UseAuthentication();
+            app.UseAuthorization();
+        }
+
         private void RegisterEventBus(IServiceCollection services)
         {
             var subscriptionClientName = Configuration["SubscriptionClientName"];
@@ -192,6 +259,14 @@ namespace Services.Basket.API
 
             services.AddTransient<ProductPriceChangedIntegrationEventHandler>();
             services.AddTransient<OrderStartedIntegrationEventHandler>();
+        }
+
+        private void ConfigureEventBus(IApplicationBuilder app)
+        {
+            var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+
+            eventBus.Subscribe<ProductPriceChangedIntegrationEvent, ProductPriceChangedIntegrationEventHandler>();
+            eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
         }
     }
 }

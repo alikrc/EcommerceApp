@@ -1,15 +1,28 @@
 version: "3.8"
 
 services:
-
   seq:
     image: datalust/seq:latest
+    container_name: seq
 
   basketdata:
     image: redis:alpine
+    container_name: redis_basket
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    
+#  sqldata:
+#    image: mcr.microsoft.com/mssql/server:2017-latest 
+#
+#  identity-api:
+#    image: ecommerceapp/identity.api:${PLATFORM:-linux}-${TAG:-latest}
+#    build:
+#      context: .
+#      dockerfile: Services/Identity/Identity.API/Dockerfile
+#    depends_on:
+#      - sqldata
 
   basket-api:
     image: ecommerceapp/basket.api:${PLATFORM:-linux}-${TAG:-latest}
@@ -18,4 +31,5 @@ services:
       dockerfile: Services/Basket/Basket.API/Dockerfile
     depends_on:
       - basketdata
+      #- identity-api
       - rabbitmq
