@@ -1,0 +1,2 @@
+CardHolderName,CardNumber,CardType,City,Country,Email,Expiration,LastName,Name,PhoneNumber,UserName,ZipCode,State,Street,SecurityNumber,NormalizedEmail,NormalizedUserName,Password
+Ali,4012888888881881,1,Ankara,Turkey,ali@karaca.com,12/21,Karaca,Ali,1234567890,ali@karaca.com,98052,WA,187,535,ALI@KARACA.COM,ALI@KARACA.COM,Pass@word1

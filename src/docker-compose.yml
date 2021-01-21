@@ -13,16 +13,17 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
     
-#  sqldata:
-#    image: mcr.microsoft.com/mssql/server:2017-latest 
-#
-#  identity-api:
-#    image: ecommerceapp/identity.api:${PLATFORM:-linux}-${TAG:-latest}
-#    build:
-#      context: .
-#      dockerfile: Services/Identity/Identity.API/Dockerfile
-#    depends_on:
-#      - sqldata
+  sqldata:
+    image: mcr.microsoft.com/mssql/server:2017-latest 
+    container_name: sql_server
+
+  identity-api:
+    image: ecommerceapp/identity.api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Services/Identity/Identity.API/Dockerfile
+    depends_on:
+      - sqldata
 
   basket-api:
     image: ecommerceapp/basket.api:${PLATFORM:-linux}-${TAG:-latest}
@@ -31,5 +32,5 @@ services:
       dockerfile: Services/Basket/Basket.API/Dockerfile
     depends_on:
       - basketdata
-      #- identity-api
+      - identity-api
       - rabbitmq

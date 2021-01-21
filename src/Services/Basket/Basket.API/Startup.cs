@@ -3,7 +3,6 @@ using Autofac.Extensions.DependencyInjection;
 using EventBus;
 using EventBus.Abstractions;
 using EventBusRabbitMQ;
-using GrpcBasket;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -48,10 +47,10 @@ namespace Services.Basket.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public virtual IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddGrpc(options =>
-            {
-                options.EnableDetailedErrors = true;
-            });
+            //services.AddGrpc(options =>
+            //{
+            //    options.EnableDetailedErrors = true;
+            //});
 
             services.AddControllers(options =>
             {
@@ -179,23 +178,23 @@ namespace Services.Basket.API
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<BasketService>();
+                //endpoints.MapGrpcService<BasketService>();
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapControllers();
-                endpoints.MapGet("/_proto/", async ctx =>
-                {
-                    ctx.Response.ContentType = "text/plain";
-                    using var fs = new FileStream(Path.Combine(env.ContentRootPath, "Proto", "basket.proto"), FileMode.Open, FileAccess.Read);
-                    using var sr = new StreamReader(fs);
-                    while (!sr.EndOfStream)
-                    {
-                        var line = await sr.ReadLineAsync();
-                        if (line != "/* >>" || line != "<< */")
-                        {
-                            await ctx.Response.WriteAsync(line);
-                        }
-                    }
-                });
+                //endpoints.MapGet("/_proto/", async ctx =>
+                //{
+                //    ctx.Response.ContentType = "text/plain";
+                //    using var fs = new FileStream(Path.Combine(env.ContentRootPath, "Proto", "basket.proto"), FileMode.Open, FileAccess.Read);
+                //    using var sr = new StreamReader(fs);
+                //    while (!sr.EndOfStream)
+                //    {
+                //        var line = await sr.ReadLineAsync();
+                //        if (line != "/* >>" || line != "<< */")
+                //        {
+                //            await ctx.Response.WriteAsync(line);
+                //        }
+                //    }
+                //});
                 //endpoints.MapHealthChecks("/hc", new HealthCheckOptions()
                 //{
                 //    Predicate = _ => true,
@@ -259,6 +258,7 @@ namespace Services.Basket.API
 
             services.AddTransient<ProductPriceChangedIntegrationEventHandler>();
             services.AddTransient<OrderStartedIntegrationEventHandler>();
+            services.AddTransient<ProductStockDecreasedIntegratationEventHandler>();
         }
 
         private void ConfigureEventBus(IApplicationBuilder app)
@@ -267,6 +267,7 @@ namespace Services.Basket.API
 
             eventBus.Subscribe<ProductPriceChangedIntegrationEvent, ProductPriceChangedIntegrationEventHandler>();
             eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
+            eventBus.Subscribe<ProductStockDecreasedIntegratationEvent, ProductStockDecreasedIntegratationEventHandler>();
         }
     }
 }

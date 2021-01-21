@@ -14,6 +14,7 @@ COPY "EcommerceApp.sln" "EcommerceApp.sln"
 COPY "EventBus/EventBus/EventBus.csproj" "EventBus/EventBus/EventBus.csproj"
 COPY "EventBus/EventBusRabbitMQ/EventBusRabbitMQ.csproj" "EventBus/EventBusRabbitMQ/EventBusRabbitMQ.csproj"
 COPY "Services/Basket/Basket.API/Basket.API.csproj" "Services/Basket/Basket.API/Basket.API.csproj"
+COPY "Services/Identity/Identity.API/Identity.API.csproj", "Services/Identity/Identity.API/Identity.API.csproj"
 COPY "docker-compose.dcproj" "docker-compose.dcproj"
 
 RUN dotnet restore "EcommerceApp.sln"
