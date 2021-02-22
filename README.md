@@ -1,4 +1,4 @@
-This project is an example ecommerce application based on microservice architecture and runs in docker.
+This project is an example e-commerce application based on microservice architecture and runs in docker.
 
 Basket and Identity apis implemented. Docker with linux containers required to run.
 
